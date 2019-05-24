@@ -2,7 +2,7 @@ var mqtt = require('mqtt')
 require('dotenv').config()
 
 var client = mqtt.connect('mqtt://127.0.0.1:1883', {
-    username: `${process.env.DEVICE_NAME}@${process.env.PRODUCT_NAME}`,
+    username: `${process.env.PRODUCT_NAME}/${process.env.DEVICE_NAME}`,
     password: process.env.SECRET
 })
 client.on('connect', function (connack) {

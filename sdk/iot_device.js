@@ -10,11 +10,11 @@ class IotDevice extends EventEmitter {
         this.productName = productName
         this.deviceName = deviceName
         this.secret = secret
-        this.username = `${this.deviceName}@${this.productName}`
+        this.username = `${this.productName}/${this.deviceName}`
         if(clientID != null){
-            this.clientIdentifier = `${clientID}@${this.deviceName}@${this.productName}`
+            this.clientIdentifier = `${this.username}/${clientID}`
         }else{
-            this.clientIdentifier = `${this.deviceName}@${this.productName}`
+            this.clientIdentifier = this.username
         }
     }
 
