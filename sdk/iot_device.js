@@ -1,5 +1,6 @@
 //iot_device.js
 "use strict";
+const ObjectId = require('bson').ObjectID;
 var mqtt = require('mqtt')
 const EventEmitter = require('events');
 
@@ -41,6 +42,15 @@ class IotDevice extends EventEmitter {
     disconnect() {
         if (this.client != null) {
             this.client.end()
+        }
+    }
+
+    uploadData(data, type="default"){
+        if(this.client != null){
+            var topic = `upload_data/${this.productName}/${this.deviceName}/${type}/${new ObjectId().toHexString()}`
+            this.client.publish(topic, data, {
+                qos: 1
+            })
         }
     }
 }
