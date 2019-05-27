@@ -72,3 +72,4 @@ typings/
 # Serverless directories
 .serverless
 .idea
+./tmp

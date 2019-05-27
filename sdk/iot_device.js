@@ -1,11 +1,12 @@
 //iot_device.js
 "use strict";
+var levelStore = require('mqtt-level-store');
 const ObjectId = require('bson').ObjectID;
 var mqtt = require('mqtt')
 const EventEmitter = require('events');
 
 class IotDevice extends EventEmitter {
-    constructor({serverAddress = "127.0.0.1:8883", productName, deviceName, secret, clientID} = {}) {
+    constructor({serverAddress = "127.0.0.1:8883", productName, deviceName, secret, clientID, storePath} = {}) {
         super();
         this.serverAddress = `mqtts://${serverAddress}`
         this.productName = productName
@@ -17,16 +18,24 @@ class IotDevice extends EventEmitter {
         }else{
             this.clientIdentifier = this.username
         }
+        if(storePath != null) {
+            this.manager = levelStore(storePath);
+        }
     }
 
     connect() {
-        this.client = mqtt.connect(this.serverAddress, {
+        var opts = {
             rejectUnauthorized: false,
             username: this.username,
             password: this.secret,
             clientId: this.clientIdentifier,
             clean: false
-        })
+        };
+        if(this.manager != null){
+            opts.incomingStore = this.manager.incoming
+            opts.outgoingStore = this.manager.outgoing
+        }
+        this.client = mqtt.connect(this.serverAddress, opts)
         var self = this
         this.client.on("connect", function () {
             self.emit("online")
