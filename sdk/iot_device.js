@@ -62,6 +62,15 @@ class IotDevice extends EventEmitter {
             })
         }
     }
+
+    updateStatus(status){
+        if(this.client != null){
+            var topic = `update_status/${this.productName}/${this.deviceName}/${new ObjectId().toHexString()}`
+            this.client.publish(topic, JSON.stringify(status), {
+                qos: 1
+            })
+        }
+    }
 }
 
 
