@@ -13,11 +13,12 @@ var device = new IotDevice({
 device.on("online", function () {
     console.log("device is online")
 })
-device.on("offline", function () {
-    console.log("device is offline")
-})
-
-device.on("error", function (err) {
-    console.log(err)
+device.on("command", function (command, data, respondCommand) {
+    if (command == "ping") {
+        console.log(`get ping with: ${data.readUInt32BE(0)}`)
+        const buf = Buffer.alloc(4);
+        buf.writeUInt32BE(Math.floor(Date.now())/1000, 0);
+        respondCommand(buf)
+    }
 })
 device.connect()
