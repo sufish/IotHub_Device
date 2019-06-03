@@ -90,7 +90,7 @@ class IotDevice extends EventEmitter {
         }
     }
 
-    handleCommand({commandName, requestID, encoding, payload, expiresAt}) {
+    handleCommand({commandName, requestID, encoding, payload, expiresAt, commandType = "cmd"}) {
         if (expiresAt == null || expiresAt > Math.floor(Date.now() / 1000)) {
             var data = payload;
             if (encoding == "base64") {
@@ -98,7 +98,7 @@ class IotDevice extends EventEmitter {
             }
             var self = this
             var respondCommand = function (respData) {
-                var topic = `cmd_resp/${self.productName}/${self.deviceName}/${commandName}/${requestID}/${new ObjectId().toHexString()}`
+                var topic = `${commandType}_resp/${self.productName}/${self.deviceName}/${commandName}/${requestID}/${new ObjectId().toHexString()}`
                 self.client.publish(topic, respData, {
                     qos: 1
                 })
@@ -108,16 +108,17 @@ class IotDevice extends EventEmitter {
     }
 
     dispatchMessage(topic, payload) {
-        var cmdTopicRule = "cmd/:productName/:deviceName/:commandName/:encoding/:requestID/:expiresAt?"
+        var cmdTopicRule = "(cmd|rpc)/:productName/:deviceName/:commandName/:encoding/:requestID/:expiresAt?"
         var result
         if ((result = pathToRegexp(cmdTopicRule).exec(topic)) != null) {
-            if (this.checkRequestDuplication(result[5])) {
+            if (this.checkRequestDuplication(result[6])) {
                 this.handleCommand({
-                    commandName: result[3],
-                    encoding: result[4],
-                    requestID: result[5],
-                    expiresAt: result[6] != null ? parseInt(result[6]) : null,
-                    payload: payload
+                    commandName: result[4],
+                    encoding: result[5],
+                    requestID: result[6],
+                    expiresAt: result[7] != null ? parseInt(result[7]) : null,
+                    payload: payload,
+                    commandType: result[1]
                 })
             }
         }
