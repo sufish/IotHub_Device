@@ -123,6 +123,15 @@ class IotDevice extends EventEmitter {
             }
         }
     }
+
+    sendDataRequest(resource, payload = "") {
+        if (this.client != null) {
+            var topic = `get/${this.productName}/${this.deviceName}/${resource}/${new ObjectId().toHexString()}`
+            this.client.publish(topic, payload, {
+                qos: 1
+            })
+        }
+    }
 }
 
 
