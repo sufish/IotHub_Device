@@ -103,8 +103,19 @@ class IotDevice extends EventEmitter {
                     qos: 1
                 })
             }
-            this.emit("command", commandName, data, respondCommand)
+            if (commandName.startsWith("$")) {
+                if (commandName == "$set_ntp") {
+                    this.handleNTP(JSON.parse(data.toString()))
+                }
+            } else {
+                this.emit("command", commandName, data, respondCommand)
+            }
         }
+    }
+
+    handleNTP(payload) {
+        var time = Math.floor((payload.iothub_recv + payload.iothub_send + Date.now() - payload.device_time) / 2)
+        this.emit("ntp_set", time)
     }
 
     dispatchMessage(topic, payload) {
@@ -131,6 +142,10 @@ class IotDevice extends EventEmitter {
                 qos: 1
             })
         }
+    }
+
+    sendNTPRequest() {
+        this.sendDataRequest("$ntp", JSON.stringify({device_time: Date.now()}))
     }
 }
 
