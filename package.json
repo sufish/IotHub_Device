@@ -6,8 +6,9 @@
     "jsonwebtoken": "^8.5.1",
     "bson": "^4.0.2",
     "mqtt-level-store": "^2.2.0",
-    "node-persist": "^3.0.4",
-    "path-to-regexp": "^3.0.0"
+    "node-persist": "2.1.0",
+    "path-to-regexp": "^3.0.0",
+    "level": "^5.0.1"
   },
   "devDependencies": {
     "dotenv": "^8.0.0"
