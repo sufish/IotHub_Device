@@ -157,6 +157,7 @@ class IotDevice extends EventEmitter {
     dispatchMessage(topic, payload) {
         var cmdTopicRule = "(cmd|rpc)/:productName/:deviceName/:commandName/:encoding/:requestID/:expiresAt?"
         var tagTopicRule = "tags/:productName/:tag/cmd/:commandName/:encoding/:requestID/:expiresAt?"
+        var m2mTopicRule = "m2m/:productName/:deviceName/:senderDeviceName/:MessageID"
         var result
         var self = this
         if ((result = pathToRegexp(cmdTopicRule).exec(topic)) != null) {
@@ -173,8 +174,7 @@ class IotDevice extends EventEmitter {
                 }
 
             })
-        }
-        else if ((result = pathToRegexp(tagTopicRule).exec(topic)) != null) {
+        } else if ((result = pathToRegexp(tagTopicRule).exec(topic)) != null) {
             this.checkRequestDuplication(result[5], function (isDup) {
                 if (!isDup) {
                     self.handleCommand({
@@ -186,7 +186,14 @@ class IotDevice extends EventEmitter {
                     })
                 }
             })
+        } else if ((result = pathToRegexp(m2mTopicRule).exec(topic)) != null) {
+            this.checkRequestDuplication(result[4], function (isDup) {
+                if (!isDup) {
+                    self.emit("device_message", result[3], payload)
+                }
+            })
         }
+
     }
 
 
@@ -208,6 +215,15 @@ class IotDevice extends EventEmitter {
         this.persistent_store.getTags(function (tags) {
             self.sendDataRequest("$tags", JSON.stringify(tags))
         })
+    }
+
+    sendToDevice(deviceName, payload) {
+        if (this.client != null) {
+            var topic = `m2m/${this.productName}/${deviceName}/${this.deviceName}/${new ObjectId().toHexString()}`
+            this.client.publish(topic, payload, {
+                qos: 1
+            })
+        }
     }
 }
 
