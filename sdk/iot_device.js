@@ -7,6 +7,7 @@ const EventEmitter = require('events');
 const storage = require('node-persist');
 const pathToRegexp = require('path-to-regexp')
 const PersistentStore = require("./persistent_storage")
+const OTAProgress = require("./ota_progress")
 
 
 class IotDevice extends EventEmitter {
@@ -27,6 +28,7 @@ class IotDevice extends EventEmitter {
         }
         storage.init({dir: `${storePath}/message_cache`})
         this.persistent_store = new PersistentStore(storePath)
+        this.shadowVersion = 0
     }
 
     connect() {
@@ -45,6 +47,7 @@ class IotDevice extends EventEmitter {
         var self = this
         this.client.on("connect", function () {
             self.sendTagsRequest()
+            self.sendDataRequest("$shadow")
             self.emit("online")
         })
         this.client.on("offline", function () {
@@ -114,6 +117,21 @@ class IotDevice extends EventEmitter {
                     this.handleNTP(payload)
                 } else if (commandName == "$set_tags") {
                     this.setTags(payload)
+                } else if (commandName == "$ota_upgrade") {
+                    var progress = new OTAProgress({
+                        productName: this.productName,
+                        deviceName: this.deviceName,
+                        mqttClient: this.client,
+                        version: payload.version,
+                        type: payload.type
+                    })
+                    this.emit("ota_upgrade", payload, progress)
+                } else if (commandName == "$update_shadow") {
+                    this.handleUpdateShadow(payload);
+                } else if (commandName == "$shadow_reply") {
+                    if (payload.version > this.shadowVersion && payload.status == "success") {
+                        this.shadowVersion = payload.version
+                    }
                 }
             } else {
                 this.emit("command", commandName, data, respondCommand)
@@ -152,6 +170,24 @@ class IotDevice extends EventEmitter {
             }
         })
 
+    }
+
+    handleUpdateShadow(shadow) {
+        if (this.shadowVersion <= shadow.version) {
+            this.shadowVersion = shadow.version
+            if (shadow.state.desired != null) {
+                var self = this
+                var respondToShadowUpdate = function () {
+                    self.uploadData(JSON.stringify({
+                        state: {
+                            desired: null
+                        },
+                        version: self.shadowVersion
+                    }), "$shadow_updated")
+                }
+                this.emit("shadow", shadow.state.desired, respondToShadowUpdate)
+            }
+        }
     }
 
     dispatchMessage(topic, payload) {
@@ -224,6 +260,15 @@ class IotDevice extends EventEmitter {
                 qos: 1
             })
         }
+    }
+
+    reportShadow(reported) {
+        this.uploadData(JSON.stringify({
+            state: {
+                reported: reported
+            },
+            version: this.shadowVersion
+        }), "$shadow_reported")
     }
 }
 
