@@ -16,7 +16,9 @@ device.on("online", function () {
 device.on("command", function (command, data) {
     if (command == "weather") {
         console.log(`weather: ${data.toString()}`)
-        device.disconnect()
+        setTimeout(function () {
+            device.disconnect()
+        }, 200)
     }
 })
 device.connect()
