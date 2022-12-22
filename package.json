@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "dependencies": {
     "mqtt": "^2.18.8",
-    "jsonwebtoken": "^8.5.1",
+    "jsonwebtoken": "^9.0.0",
     "bson": "^4.0.2",
     "mqtt-level-store": "^2.2.0",
     "node-persist": "2.1.0",
